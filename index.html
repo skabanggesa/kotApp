@@ -66,17 +66,17 @@
     <div id="dashboard" class="hidden min-h-screen flex flex-col">
         
         <nav class="bg-blue-800 text-white p-4 shadow-md no-print">
-            <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-xl font-bold hidden md:block">Sistem Olahraga</h1>
-                <div class="flex space-x-2 text-sm md:text-base overflow-x-auto">
-                    <button onclick="switchTab('peserta')" class="hover:text-yellow-300 px-2 py-1 transition">Data Peserta</button>
-                    <button onclick="switchTab('borang')" class="hover:text-yellow-300 px-2 py-1 transition">Borang</button>
-                    <button onclick="switchTab('senarai')" class="hover:text-yellow-300 px-2 py-1 transition bg-blue-900 rounded">Senarai Keputusan</button>
-                    <button onclick="switchTab('result')" class="hover:text-yellow-300 px-2 py-1 transition">Analisis</button>
-                </div>
-                <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 text-sm ml-2">Keluar</button>
-            </div>
-        </nav>
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold hidden md:block">Sistem Olahraga</h1>
+        <div class="flex space-x-2 text-sm md:text-base overflow-x-auto">
+            <button id="btn-peserta" onclick="switchTab('peserta')" class="nav-btn hover:text-yellow-300 px-3 py-1 transition">Data Peserta</button>
+            <button id="btn-borang" onclick="switchTab('borang')" class="nav-btn hover:text-yellow-300 px-3 py-1 transition">Borang</button>
+            <button id="btn-senarai" onclick="switchTab('senarai')" class="nav-btn hover:text-yellow-300 px-3 py-1 transition">Senarai Keputusan</button>
+            <button id="btn-result" onclick="switchTab('result')" class="nav-btn hover:text-yellow-300 px-3 py-1 transition">Analisis</button>
+        </div>
+        <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 text-sm ml-2">Keluar</button>
+    </div>
+</nav>
 
         <div class="container mx-auto p-4 flex-grow">
             
@@ -209,4 +209,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>
