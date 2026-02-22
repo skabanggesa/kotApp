@@ -64,23 +64,38 @@ function logout() {
 }
 
 function switchTab(tabName) {
-    // Tambah 'senarai' dalam array tabs
+    // 1. Senarai semua tab yang ada
     const tabs = ['peserta', 'borang', 'senarai', 'result'];
     
     tabs.forEach(t => {
+        // A. Sembunyikan kandungan tab
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
+
+        // B. Buang gaya 'highlight' daripada butang navigasi
+        // Kita cari butang berdasarkan ID yang kita beri tadi (btn-peserta, dsb)
+        const btn = document.getElementById('btn-' + t);
+        if (btn) {
+            btn.classList.remove('bg-blue-900', 'rounded', 'font-bold');
+        }
     });
 
+    // 2. Tunjukkan tab yang dipilih
     const target = document.getElementById('tab-' + tabName);
     if (target) {
         target.classList.remove('hidden');
         
-        // Refresh data spesifik mengikut tab
+        // 3. Tambah gaya 'highlight' pada butang yang aktif sahaja
+        const activeBtn = document.getElementById('btn-' + tabName);
+        if (activeBtn) {
+            activeBtn.classList.add('bg-blue-900', 'rounded', 'font-bold');
+        }
+        
+        // 4. Refresh data spesifik mengikut tab
         if(tabName === 'result') paparkanAnalisis();
         if(tabName === 'senarai') {
-            kemaskiniFilterKeputusan(); // Isi dropdown filter
-            renderKeputusanPenuh();     // Papar table
+            kemaskiniFilterKeputusan(); 
+            renderKeputusanPenuh();     
         }
     }
 }
@@ -963,4 +978,5 @@ function cetakBorangSemasa() {
     buttons.forEach(b => b.remove());
 
     laksanaCetak("BORANG KEPUTUSAN HAKIM", clone);
+
 }
