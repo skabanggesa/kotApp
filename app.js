@@ -980,3 +980,26 @@ function cetakBorangSemasa() {
     laksanaCetak("BORANG KEPUTUSAN HAKIM", clone);
 
 }
+
+function cetakBorang() {
+    // 1. Ambil kandungan html dari borang-preview
+    const borangContent = document.getElementById('borang-preview').innerHTML;
+    
+    // 2. Semak jika borang masih kosong (belum dijana)
+    if (borangContent.includes('Borang acara akan muncul di sini')) {
+        alert("Sila jana borang terlebih dahulu sebelum mencetak.");
+        return;
+    }
+
+    // 3. Masukkan kandungan ke dalam print-container
+    const printContainer = document.getElementById('print-container');
+    printContainer.innerHTML = borangContent;
+
+    // 4. Panggil dialog cetakan komputer
+    window.print();
+
+    // 5. (Pilihan) Bersihkan print-container selepas print supaya tak bertindih dengan cetakan lain
+    setTimeout(() => {
+        printContainer.innerHTML = '';
+    }, 1000);
+}
