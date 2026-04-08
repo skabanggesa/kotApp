@@ -1155,3 +1155,94 @@ function hantarPendaftaran() {
         toggleLoading(false); // Tutup animasi loading
     });
 }
+
+// =========================================================
+// FUNGSI CETAK SENARAI REKOD KEJOHANAN (VERSI HIBRID / TERKINI)
+// =========================================================
+function cetakRekodSemasa() {
+    // 1. Semak jika ada data rekod lama
+    if (!dbRekod || dbRekod.length === 0) {
+        alert("Tiada data rekod induk ditemui. Sila pastikan rekod telah dimuat naik atau tekan Refresh.");
+        return;
+    }
+
+    const tahunSemasa = new Date().getFullYear();
+
+    // 2. Bina bekas (container) untuk cetakan
+    const container = document.createElement('div');
+    container.className = "p-4 bg-white";
+
+    // 3. Bina pengepala jadual (Header)
+    let htmlContent = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="font-size: 24px; font-weight: bold; margin: 0;">SENARAI REKOD KEJOHANAN OLAHRAGA TERKINI</h2>
+            <p style="font-size: 14px; color: #555;">Dikemaskini dengan rekod baharu kejohanan tahun ${tahunSemasa}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f3f4f6; border-bottom: 2px solid #000;">
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">No.</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Acara</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Kategori</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Pencapaian Rekod</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Nama Pemegang Rekod</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Tahun</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // 4. Semak & Gabungkan Data (Logik Hibrid)
+    dbRekod.forEach((rekodLama, index) => {
+        // Tetapan asal (jika rekod tidak dipecahkan)
+        let namaPemegang = rekodLama.Nama || '-';
+        let pencapaian = `${rekodLama.Rekod || '-'} ${rekodLama.Jenis || ''}`.trim();
+        let tahunRekod = rekodLama.Tahun || '-';
+        let statusBaharu = ""; // Penanda visual jika ada rekod baru
+
+        // Carian Pintar: Cari jika ada peserta pecah rekod dalam 'dbKeputusan'
+        // Syarat: Acara sama, Kategori sama, dan Catatan_Rekod tidak kosong (mengandungi teks)
+        if (dbKeputusan && dbKeputusan.length > 0) {
+            const rekodDipecahkan = dbKeputusan.find(k => 
+                k.Acara === rekodLama.Acara && 
+                k.Kategori === rekodLama.Kategori && 
+                k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== ""
+            );
+
+            // Jika ada rekod baharu dijumpai!
+            if (rekodDipecahkan) {
+                namaPemegang = rekodDipecahkan.Nama;
+                pencapaian = rekodDipecahkan.Keputusan; // Ambil masa/jarak dari keputusan
+                tahunRekod = tahunSemasa; // Guna tahun semasa
+                statusBaharu = `<br><span style="font-size: 11px; color: green; font-weight: bold;">⭐ REKOD BAHARU</span>`;
+            }
+        }
+        
+        // 5. Masukkan data ke dalam baris jadual
+        htmlContent += `
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${rekodLama.Acara || '-'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${rekodLama.Kategori || '-'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: red; font-weight: bold;">
+                    ${pencapaian} ${statusBaharu}
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${namaPemegang}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: ${statusBaharu ? 'bold' : 'normal'};">${tahunRekod}</td>
+            </tr>
+        `;
+    });
+
+    htmlContent += `
+            </tbody>
+        </table>
+        <div style="margin-top: 30px; font-size: 12px; text-align: right; font-style: italic;">
+            Dicetak pada: ${new Date().toLocaleString('ms-MY')}
+        </div>
+    `;
+
+    container.innerHTML = htmlContent;
+
+    // 6. Hantar ke fungsi cetakan sedia ada (laksanaCetak)
+    laksanaCetak("SENARAI REKOD KEJOHANAN", container);
+}
