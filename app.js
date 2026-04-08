@@ -1157,10 +1157,10 @@ function hantarPendaftaran() {
 }
 
 // =========================================================
-// FUNGSI CETAK SENARAI REKOD KEJOHANAN (VERSI HIBRID + REKOD BAHARU/PERTAMA)
+// FUNGSI CETAK SENARAI REKOD KEJOHANAN (VERSI HIBRID + SEMAKAN KEDUDUKAN 1)
 // =========================================================
 function cetakRekodSemasa() {
-    // Pastikan sekurang-kurangnya salah satu database (rekod lama atau keputusan baru) ada data
+    // Pastikan sekurang-kurangnya salah satu database ada data
     if ((!dbRekod || dbRekod.length === 0) && (!dbKeputusan || dbKeputusan.length === 0)) {
         alert("Tiada sebarang data rekod atau keputusan ditemui.");
         return;
@@ -1168,25 +1168,26 @@ function cetakRekodSemasa() {
 
     const tahunSemasa = new Date().getFullYear();
     let senaraiAkhir = [];
-    let rekodDipesan = new Set(); // Untuk kesan acara yang dah diproses
+    let rekodDipesan = new Set(); 
 
-    // LANGKAH 1: PROSES REKOD LAMA (Dan semak jika dipecahkan)
+    // LANGKAH 1: PROSES REKOD LAMA
     if (dbRekod && dbRekod.length > 0) {
         dbRekod.forEach(rekodLama => {
             let kunci = rekodLama.Acara + "_" + rekodLama.Kategori;
-            rekodDipesan.add(kunci); // Tanda acara ini dah wujud
+            rekodDipesan.add(kunci); 
 
             let namaPemegang = rekodLama.Nama || '-';
             let pencapaian = `${rekodLama.Rekod || '-'} ${rekodLama.Jenis || ''}`.trim();
             let tahunRekod = rekodLama.Tahun || '-';
             let statusBaharu = "";
 
-            // Semak jika rekod lama ini dipecahkan tahun ini
             if (dbKeputusan && dbKeputusan.length > 0) {
+                // SYARAT KETAT: Mesti ada Catatan Rekod DAN mendapat Tempat Ke-1
                 const rekodDipecahkan = dbKeputusan.find(k => 
                     k.Acara === rekodLama.Acara && 
                     k.Kategori === rekodLama.Kategori && 
-                    k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== ""
+                    k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== "" &&
+                    (k.Kedudukan == 1 || k.Kedudukan == "1") // <- SYARAT KEDUDUKAN 1
                 );
 
                 if (rekodDipecahkan) {
@@ -1208,14 +1209,13 @@ function cetakRekodSemasa() {
         });
     }
 
-    // LANGKAH 2: CARI REKOD PERTAMA KALI (Acara/Kategori yang tiada dalam db_rekod lama)
+    // LANGKAH 2: CARI REKOD PERTAMA KALI (Kategori 7-9 Tahun / Relay)
     if (dbKeputusan && dbKeputusan.length > 0) {
         dbKeputusan.forEach(k => {
-            // Jika hakim tanda ada rekod
-            if (k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== "") {
+            // SYARAT KETAT: Mesti ada Catatan Rekod DAN mendapat Tempat Ke-1
+            if (k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== "" && (k.Kedudukan == 1 || k.Kedudukan == "1")) {
                 let kunci = k.Acara + "_" + k.Kategori;
                 
-                // Jika acara/kategori ini BELUM ADA dalam senarai rekod lama
                 if (!rekodDipesan.has(kunci)) {
                     senaraiAkhir.push({
                         Acara: k.Acara,
@@ -1225,13 +1225,13 @@ function cetakRekodSemasa() {
                         Tahun: tahunSemasa,
                         AdaStatus: true
                     });
-                    rekodDipesan.add(kunci); // Tanda supaya tak masuk dua kali
+                    rekodDipesan.add(kunci); 
                 }
             }
         });
     }
 
-    // LANGKAH 3: SUSUN SENARAI (Ikut Acara dahulu, kemudian baru ikut Kategori)
+    // LANGKAH 3: SUSUN SENARAI (Ikut Acara dahulu, kemudian Kategori)
     senaraiAkhir.sort((a, b) => a.Acara.localeCompare(b.Acara) || a.Kategori.localeCompare(b.Kategori));
 
     // LANGKAH 4: BINA JADUAL HTML
@@ -1280,6 +1280,6 @@ function cetakRekodSemasa() {
 
     container.innerHTML = htmlContent;
 
-    // Hantar ke fungsi cetakan sedia ada (laksanaCetak)
+    // Hantar ke fungsi cetakan sedia ada
     laksanaCetak("SENARAI REKOD KEJOHANAN", container);
 }
