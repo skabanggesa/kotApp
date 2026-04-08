@@ -30,7 +30,7 @@ function toggleLoading(show) {
 }
 
 // =========================================================
-// 2. SISTEM LOGIN & NAVIGASI
+// 2. SISTEM LOGIN & NAVIGASI (KEMASKINI AKSES)
 // =========================================================
 
 function login() {
@@ -38,11 +38,15 @@ function login() {
     const pass = passInput ? passInput.value : '';
     let valid = false;
 
+    // 1. Tentukan peranan (role) berdasarkan kata laluan
     if (pass === 'admin123') {
         currentUser = 'admin';
         valid = true;
     } else if (pass === 'guru123') {
         currentUser = 'guru';
+        valid = true;
+    } else if (pass === 'kot2026') { // ID BAHARU UNTUK AKSES TERHAD
+        currentUser = 'pemantau';
         valid = true;
     }
 
@@ -53,7 +57,25 @@ function login() {
         const dashboard = document.getElementById('dashboard');
         if(dashboard) dashboard.classList.remove('hidden');
 
-        switchTab('peserta'); 
+        // 2. KAWALAN AKSES MENGIKUT PERANAN
+        const btnPeserta = document.getElementById('btn-peserta');
+        const btnBorang = document.getElementById('btn-borang');
+
+        if (currentUser === 'pemantau') {
+            // Sembunyikan tab Peserta dan Borang untuk Pemantau
+            if (btnPeserta) btnPeserta.classList.add('hidden');
+            if (btnBorang) btnBorang.classList.add('hidden');
+            
+            // Halakan pengguna terus ke tab Senarai (Keputusan)
+            switchTab('senarai'); 
+        } else {
+            // Pastikan butang dipaparkan untuk Admin & Guru (sekiranya ada isu cache/hidden)
+            if (btnPeserta) btnPeserta.classList.remove('hidden');
+            if (btnBorang) btnBorang.classList.remove('hidden');
+            
+            // Halakan ke tab Peserta seperti biasa
+            switchTab('peserta'); 
+        }
     } else {
         alert("Kata Laluan Salah!");
     }
