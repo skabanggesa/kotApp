@@ -1231,8 +1231,8 @@ function cetakRekodSemasa() {
         });
     }
 
-    // LANGKAH 3: SUSUN SENARAI (Ikut Kategori dan kemudian Acara supaya kemas bila cetak)
-    senaraiAkhir.sort((a, b) => a.Kategori.localeCompare(b.Kategori) || a.Acara.localeCompare(b.Acara));
+    // LANGKAH 3: SUSUN SENARAI (Ikut Acara dahulu, kemudian baru ikut Kategori)
+    senaraiAkhir.sort((a, b) => a.Acara.localeCompare(b.Acara) || a.Kategori.localeCompare(b.Kategori));
 
     // LANGKAH 4: BINA JADUAL HTML
     const container = document.createElement('div');
