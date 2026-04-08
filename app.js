@@ -1157,22 +1157,87 @@ function hantarPendaftaran() {
 }
 
 // =========================================================
-// FUNGSI CETAK SENARAI REKOD KEJOHANAN (VERSI HIBRID / TERKINI)
+// FUNGSI CETAK SENARAI REKOD KEJOHANAN (VERSI HIBRID + REKOD BAHARU/PERTAMA)
 // =========================================================
 function cetakRekodSemasa() {
-    // 1. Semak jika ada data rekod lama
-    if (!dbRekod || dbRekod.length === 0) {
-        alert("Tiada data rekod induk ditemui. Sila pastikan rekod telah dimuat naik atau tekan Refresh.");
+    // Pastikan sekurang-kurangnya salah satu database (rekod lama atau keputusan baru) ada data
+    if ((!dbRekod || dbRekod.length === 0) && (!dbKeputusan || dbKeputusan.length === 0)) {
+        alert("Tiada sebarang data rekod atau keputusan ditemui.");
         return;
     }
 
     const tahunSemasa = new Date().getFullYear();
+    let senaraiAkhir = [];
+    let rekodDipesan = new Set(); // Untuk kesan acara yang dah diproses
 
-    // 2. Bina bekas (container) untuk cetakan
+    // LANGKAH 1: PROSES REKOD LAMA (Dan semak jika dipecahkan)
+    if (dbRekod && dbRekod.length > 0) {
+        dbRekod.forEach(rekodLama => {
+            let kunci = rekodLama.Acara + "_" + rekodLama.Kategori;
+            rekodDipesan.add(kunci); // Tanda acara ini dah wujud
+
+            let namaPemegang = rekodLama.Nama || '-';
+            let pencapaian = `${rekodLama.Rekod || '-'} ${rekodLama.Jenis || ''}`.trim();
+            let tahunRekod = rekodLama.Tahun || '-';
+            let statusBaharu = "";
+
+            // Semak jika rekod lama ini dipecahkan tahun ini
+            if (dbKeputusan && dbKeputusan.length > 0) {
+                const rekodDipecahkan = dbKeputusan.find(k => 
+                    k.Acara === rekodLama.Acara && 
+                    k.Kategori === rekodLama.Kategori && 
+                    k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== ""
+                );
+
+                if (rekodDipecahkan) {
+                    namaPemegang = rekodDipecahkan.Nama;
+                    pencapaian = rekodDipecahkan.Keputusan;
+                    tahunRekod = tahunSemasa;
+                    statusBaharu = `<br><span style="font-size: 11px; color: green; font-weight: bold;">⭐ REKOD BAHARU</span>`;
+                }
+            }
+
+            senaraiAkhir.push({
+                Acara: rekodLama.Acara,
+                Kategori: rekodLama.Kategori,
+                Pencapaian: pencapaian + statusBaharu,
+                Nama: namaPemegang,
+                Tahun: tahunRekod,
+                AdaStatus: statusBaharu !== ""
+            });
+        });
+    }
+
+    // LANGKAH 2: CARI REKOD PERTAMA KALI (Acara/Kategori yang tiada dalam db_rekod lama)
+    if (dbKeputusan && dbKeputusan.length > 0) {
+        dbKeputusan.forEach(k => {
+            // Jika hakim tanda ada rekod
+            if (k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== "") {
+                let kunci = k.Acara + "_" + k.Kategori;
+                
+                // Jika acara/kategori ini BELUM ADA dalam senarai rekod lama
+                if (!rekodDipesan.has(kunci)) {
+                    senaraiAkhir.push({
+                        Acara: k.Acara,
+                        Kategori: k.Kategori,
+                        Pencapaian: k.Keputusan + `<br><span style="font-size: 11px; color: blue; font-weight: bold;">🌟 REKOD PERTAMA</span>`,
+                        Nama: k.Nama,
+                        Tahun: tahunSemasa,
+                        AdaStatus: true
+                    });
+                    rekodDipesan.add(kunci); // Tanda supaya tak masuk dua kali
+                }
+            }
+        });
+    }
+
+    // LANGKAH 3: SUSUN SENARAI (Ikut Kategori dan kemudian Acara supaya kemas bila cetak)
+    senaraiAkhir.sort((a, b) => a.Kategori.localeCompare(b.Kategori) || a.Acara.localeCompare(b.Acara));
+
+    // LANGKAH 4: BINA JADUAL HTML
     const container = document.createElement('div');
     container.className = "p-4 bg-white";
 
-    // 3. Bina pengepala jadual (Header)
     let htmlContent = `
         <div style="text-align: center; margin-bottom: 20px;">
             <h2 style="font-size: 24px; font-weight: bold; margin: 0;">SENARAI REKOD KEJOHANAN OLAHRAGA TERKINI</h2>
@@ -1181,54 +1246,26 @@ function cetakRekodSemasa() {
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <thead>
                 <tr style="background-color: #f3f4f6; border-bottom: 2px solid #000;">
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">No.</th>
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Acara</th>
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Kategori</th>
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Pencapaian Rekod</th>
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Nama Pemegang Rekod</th>
-                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Tahun</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left; width: 5%;">No.</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left; width: 25%;">Acara</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left; width: 15%;">Kategori</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left; width: 20%;">Pencapaian Rekod</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left; width: 25%;">Nama Pemegang Rekod</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center; width: 10%;">Tahun</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
-    // 4. Semak & Gabungkan Data (Logik Hibrid)
-    dbRekod.forEach((rekodLama, index) => {
-        // Tetapan asal (jika rekod tidak dipecahkan)
-        let namaPemegang = rekodLama.Nama || '-';
-        let pencapaian = `${rekodLama.Rekod || '-'} ${rekodLama.Jenis || ''}`.trim();
-        let tahunRekod = rekodLama.Tahun || '-';
-        let statusBaharu = ""; // Penanda visual jika ada rekod baru
-
-        // Carian Pintar: Cari jika ada peserta pecah rekod dalam 'dbKeputusan'
-        // Syarat: Acara sama, Kategori sama, dan Catatan_Rekod tidak kosong (mengandungi teks)
-        if (dbKeputusan && dbKeputusan.length > 0) {
-            const rekodDipecahkan = dbKeputusan.find(k => 
-                k.Acara === rekodLama.Acara && 
-                k.Kategori === rekodLama.Kategori && 
-                k.Catatan_Rekod && k.Catatan_Rekod.toString().trim() !== ""
-            );
-
-            // Jika ada rekod baharu dijumpai!
-            if (rekodDipecahkan) {
-                namaPemegang = rekodDipecahkan.Nama;
-                pencapaian = rekodDipecahkan.Keputusan; // Ambil masa/jarak dari keputusan
-                tahunRekod = tahunSemasa; // Guna tahun semasa
-                statusBaharu = `<br><span style="font-size: 11px; color: green; font-weight: bold;">⭐ REKOD BAHARU</span>`;
-            }
-        }
-        
-        // 5. Masukkan data ke dalam baris jadual
+    senaraiAkhir.forEach((rekod, index) => {
         htmlContent += `
             <tr style="border-bottom: 1px solid #ddd;">
                 <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${rekodLama.Acara || '-'}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${rekodLama.Kategori || '-'}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; color: red; font-weight: bold;">
-                    ${pencapaian} ${statusBaharu}
-                </td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${namaPemegang}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: ${statusBaharu ? 'bold' : 'normal'};">${tahunRekod}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${rekod.Acara || '-'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${rekod.Kategori || '-'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: red; font-weight: bold;">${rekod.Pencapaian}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${rekod.Nama || '-'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: ${rekod.AdaStatus ? 'bold' : 'normal'};">${rekod.Tahun}</td>
             </tr>
         `;
     });
@@ -1243,6 +1280,6 @@ function cetakRekodSemasa() {
 
     container.innerHTML = htmlContent;
 
-    // 6. Hantar ke fungsi cetakan sedia ada (laksanaCetak)
+    // Hantar ke fungsi cetakan sedia ada (laksanaCetak)
     laksanaCetak("SENARAI REKOD KEJOHANAN", container);
 }
