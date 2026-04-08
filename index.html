@@ -59,7 +59,10 @@
             <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Sistem Kejohanan Olahraga</h2>
             <input type="password" id="pass-input" placeholder="Masukkan Kata Laluan" class="w-full p-3 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button onclick="login()" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition duration-200">Masuk</button>
-            <p class="text-xs text-center mt-4 text-gray-500"> | |</p>
+            <div class="mt-4 border-t pt-4">
+                <button onclick="bukaBorangDaftar()" class="w-full bg-green-500 text-white font-bold py-2 rounded hover:bg-green-600 transition duration-200">Daftar Peserta Baru</button>
+            </div>
+            <p class="text-xs text-center mt-4 text-gray-500">SK Abang Gesa | Sistem Kejohanan Olahraga</p>
         </div>
     </div>
 
@@ -204,6 +207,65 @@
         <footer class="bg-gray-800 text-white text-center p-2 text-xs no-print">
             &copy; 2025 Sistem Pengurusan Kejohanan Olahraga Sekolah
         </footer>
+    </div>
+
+    <div id="modal-daftar" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto relative">
+            <button onclick="tutupBorangDaftar()" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 font-bold text-2xl">&times;</button>
+            <h2 class="text-2xl font-bold mb-4 text-center text-blue-800">Borang Pendaftaran Peserta</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">Rumah Sukan</label>
+                    <input type="text" id="regRumahSukan" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="Cth: MERAH" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-gray-700">No. Bib</label>
+                    <input type="text" id="regNoBib" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="Cth: M001" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold mb-1 text-gray-700">Nama Penuh</label>
+                    <input type="text" id="regNama" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="NAMA PESERTA" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold mb-1 text-gray-700">Kategori</label>
+                    <select id="regKategori" class="w-full p-2 border rounded bg-white">
+                        <option value="L12">Lelaki 12TKB (L12)</option>
+                        <option value="L11">Lelaki 11TKB (L11)</option>
+                        <option value="L10">Lelaki 10TKB (L10)</option>
+                        <option value="L9">Lelaki 9TKB (L9)</option>
+                        <option value="L8">Lelaki 8TKB (L8)</option>
+                        <option value="L7">Lelaki 7TKB (L7)</option>
+                        <option value="P12">Perempuan 12TKB (P12)</option>
+                        <option value="P11">Perempuan 11TKB (P11)</option>
+                        <option value="P10">Perempuan 10TKB (P10)</option>
+                        <option value="P9">Perempuan 9TKB (P9)</option>
+                        <option value="P8">Perempuan 8TKB (P8)</option>
+                        <option value="P7">Perempuan 7TKB (P7)</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-md mt-6 mb-2 text-indigo-700 border-b pb-1">Acara Individu (Maksimum 3)</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-4">
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-individu h-4 w-4" value="100M"> <span>100M</span></label>
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-individu h-4 w-4" value="200M"> <span>200M</span></label>
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-individu h-4 w-4" value="LOMPAT JAUH"> <span>LOMPAT JAUH</span></label>
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-individu h-4 w-4" value="LOMPAT TINGGI"> <span>LOMPAT TINGGI</span></label>
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-individu h-4 w-4" value="LONTAR PELURU"> <span>LONTAR PELURU</span></label>
+            </div>
+
+            <h3 class="font-bold text-md mt-6 mb-2 text-indigo-700 border-b pb-1">Acara Pasukan (Maksimum 2)</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-pasukan h-4 w-4" value="4X100M"> <span>4 X 100M</span></label>
+                <label class="flex items-center space-x-2"><input type="checkbox" class="acara-pasukan h-4 w-4" value="4X200M"> <span>4 X 200M</span></label>
+            </div>
+
+            <div class="mt-8 text-center bg-gray-50 p-4 rounded-lg">
+                <p id="regStatus" class="text-sm font-bold mb-3"></p>
+                <button onclick="hantarPendaftaran()" class="w-full md:w-auto bg-green-600 text-white font-bold py-2 px-8 rounded hover:bg-green-700 shadow transition">Hantar Pendaftaran</button>
+            </div>
+        </div>
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex flex-col items-center justify-center hidden z-50">
