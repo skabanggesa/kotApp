@@ -1025,3 +1025,133 @@ function cetakBorang() {
         printContainer.innerHTML = '';
     }, 1000);
 }
+
+// =========================================================
+// 10. PENDAFTARAN PESERTA BAHARU (MANUAL)
+// =========================================================
+
+// --- A. Buka & Tutup Borang ---
+function bukaBorangDaftar() {
+    const modal = document.getElementById('modal-daftar');
+    if(modal) modal.classList.remove('hidden');
+    
+    // Kosongkan form setiap kali dibuka semula
+    document.getElementById('regRumahSukan').value = '';
+    document.getElementById('regNoBib').value = '';
+    document.getElementById('regNama').value = '';
+    document.getElementById('regKategori').selectedIndex = 0;
+    document.getElementById('regStatus').innerText = '';
+    
+    // Uncheck dan buka semula sekatan (disabled) semua kotak semak
+    document.querySelectorAll('.acara-individu, .acara-pasukan').forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+    });
+}
+
+function tutupBorangDaftar() {
+    const modal = document.getElementById('modal-daftar');
+    if(modal) modal.classList.add('hidden');
+}
+
+// --- B. Sistem Kawalan Had Kotak Semak ---
+document.addEventListener('DOMContentLoaded', () => {
+    const individuCheckboxes = document.querySelectorAll('.acara-individu');
+    const pasukanCheckboxes = document.querySelectorAll('.acara-pasukan');
+
+    // Kawalan Had Acara Individu (Maksimum 3)
+    individuCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const jumlahDitanda = document.querySelectorAll('.acara-individu:checked').length;
+            individuCheckboxes.forEach(box => {
+                if (!box.checked) {
+                    box.disabled = jumlahDitanda >= 3; // Sekat jika dah capai 3
+                }
+            });
+        });
+    });
+
+    // Kawalan Had Acara Pasukan (Maksimum 2)
+    pasukanCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const jumlahDitanda = document.querySelectorAll('.acara-pasukan:checked').length;
+            pasukanCheckboxes.forEach(box => {
+                if (!box.checked) {
+                    box.disabled = jumlahDitanda >= 2; // Sekat jika dah capai 2
+                }
+            });
+        });
+    });
+});
+
+// --- C. Hantar Data ke Database (Pisah kepada Baris Berasingan) ---
+function hantarPendaftaran() {
+    const rumahSukan = document.getElementById('regRumahSukan').value;
+    const noBib = document.getElementById('regNoBib').value;
+    const nama = document.getElementById('regNama').value;
+    const kategori = document.getElementById('regKategori').value;
+    const statusEl = document.getElementById('regStatus');
+
+    // 1. Validasi Ringkas
+    if (!rumahSukan || !noBib || !nama) {
+        statusEl.className = "text-sm font-bold mb-3 text-red-600";
+        statusEl.innerText = "Sila isi Rumah Sukan, No. Bib dan Nama Penuh!";
+        return;
+    }
+
+    // 2. Kumpul semua acara yang ditanda
+    let senaraiAcara = [];
+    document.querySelectorAll('.acara-individu:checked, .acara-pasukan:checked').forEach(cb => {
+        senaraiAcara.push(cb.value);
+    });
+
+    if (senaraiAcara.length === 0) {
+        statusEl.className = "text-sm font-bold mb-3 text-red-600";
+        statusEl.innerText = "Sila pilih sekurang-kurangnya 1 acara!";
+        return;
+    }
+
+    statusEl.className = "text-sm font-bold mb-3 text-blue-600";
+    statusEl.innerText = `Memproses pendaftaran untuk ${senaraiAcara.length} acara. Sila tunggu...`;
+
+    // 3. Bina tatasusunan (array) data. 1 Acara = 1 Baris (Row)
+    let dataUntukDisimpan = [];
+    senaraiAcara.forEach(acaraTunggal => {
+        dataUntukDisimpan.push({
+            Rumah_Sukan: rumahSukan,
+            Nama: nama,
+            Kategori: kategori,
+            No_Bib: noBib,
+            Acara: acaraTunggal
+        });
+    });
+
+    // 4. Hantar data menggunakan API Google Apps Script sedia ada
+    toggleLoading(true); // Papar animasi loading
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: 'no-cors', 
+        body: JSON.stringify({ action: 'uploadPeserta', rows: dataUntukDisimpan })
+    })
+    .then(() => {
+        statusEl.className = "text-sm font-bold mb-3 text-green-600";
+        statusEl.innerText = "Pendaftaran Berjaya!";
+        
+        // Muat semula data peserta dari database supaya UI terkini
+        fetchData('db_peserta'); 
+        
+        // Tutup borang secara automatik selepas 2 saat
+        setTimeout(() => {
+            tutupBorangDaftar();
+        }, 2000);
+    })
+    .catch(err => {
+        console.error(err);
+        statusEl.className = "text-sm font-bold mb-3 text-red-600";
+        statusEl.innerText = "Terdapat ralat semasa menghantar data.";
+    })
+    .finally(() => {
+        toggleLoading(false); // Tutup animasi loading
+    });
+}
